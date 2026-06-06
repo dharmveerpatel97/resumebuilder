@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #818cf8;
+  --color-secondary: #ec4899;
+  --color-accent-blue: #3b82f6;
+  --color-accent-teal: #14b8a6;
+  --color-accent-orange: #f97316;
+  --color-bg-white: #ffffff;
+  --color-bg-gray: #f9fafb;
+  --color-bg-light-blue: #f0f4ff;
+  --color-text-dark: #111827;
+  --color-text-body: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-footer: #0f172a;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    color: var(--color-text-dark);
+  }
+
+  body {
+    background-color: var(--color-bg-white);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
+  }
+
+  .resume-paper {
+    @apply bg-white shadow-xl rounded-sm;
+    width: 210mm;
+    min-height: auto;
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  /* Screen preview: repeat A4 page bands so multi-page resumes are fully visible */
+  .resume-paper-preview {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      #ffffff 0,
+      #ffffff calc(297mm - 8px),
+      #e2e8f0 calc(297mm - 8px),
+      #e2e8f0 calc(297mm - 3px),
+      #ffffff calc(297mm - 3px),
+      #ffffff 297mm
+    );
+    background-size: 100% 297mm;
+    background-repeat: repeat-y;
+  }
+
+  .resume-template-root {
+    width: 100%;
+    min-height: auto;
+    box-sizing: border-box;
+  }
+
+  .resume-p {
+    padding: 10mm;
+  }
+
+  .resume-px {
+    padding-left: 10mm;
+    padding-right: 10mm;
+  }
+
+  .resume-py {
+    padding-top: 10mm;
+    padding-bottom: 10mm;
+  }
+
+  .resume-pt {
+    padding-top: 10mm;
+  }
+
+  .resume-pb {
+    padding-bottom: 10mm;
+  }
+
+  .resume-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-entry {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    height: auto;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .resume-paper {
+    width: 210mm !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    background-image: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .resume-p,
+  .resume-px,
+  .resume-py,
+  .resume-pt,
+  .resume-pb {
+    padding: 0 !important;
+  }
+}
