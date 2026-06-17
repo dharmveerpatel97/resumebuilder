@@ -4,10 +4,14 @@ import { bodyStyle, headingStyle, nameStyle, smallBodyStyle, subheadingStyle } f
 import { formatEducationGrades } from '../../utils/educationDisplay'
 import { PhotoPlaceholder } from './templateParts'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
+import { ExperienceEntryFields, ProjectEntryFields } from './entryFields'
 
-export function FresherModernTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function FresherModernTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
   const sectionHead = headingStyle(typography, theme.heading)
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
 
   return (
     <div className="resume-template-root leading-relaxed">
@@ -42,11 +46,11 @@ export function FresherModernTemplate({ data, theme, typography, spacing }: Temp
         )}
 
         <div className="grid grid-cols-2 gap-6">
-          {education.length > 0 && (
+          {filledEducation(education).length > 0 && (
             <section className="resume-section">
               <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Education</h3>
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {education.map((edu) => {
+                {filledEducation(education).map((edu) => {
                   const grades = formatEducationGrades(edu)
                   return (
                     <div key={edu.id} className="resume-entry p-2 rounded" style={{ backgroundColor: hexToRgba(theme.heading, 0.06) }}>
@@ -62,11 +66,11 @@ export function FresherModernTemplate({ data, theme, typography, spacing }: Temp
             </section>
           )}
 
-          {skills.length > 0 && (
+          {filledSkills(skills).length > 0 && (
             <section className="resume-section">
               <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Skills</h3>
               <div className="flex flex-wrap gap-2">
-                {skills.map((s) => (
+                {filledSkills(skills).map((s) => (
                   <span
                     key={s.id}
                     className="px-2 py-0.5 rounded-full"
@@ -80,37 +84,26 @@ export function FresherModernTemplate({ data, theme, typography, spacing }: Temp
           )}
         </div>
 
-        {projects.length > 0 && (
+        {filledProjects(projects).length > 0 && (
           <section className="resume-section">
             <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Projects</h3>
             <div className="flex flex-col" style={itemGapStyle(spacing)}>
-              {projects.map((p) => (
+              {filledProjects(projects).map((p) => (
                 <div key={p.id} className="resume-entry">
-                  <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                  {p.description && <p className="mt-0.5" style={bodyStyle(typography, theme.body)}>{p.description}</p>}
-                  {p.technologies && (
-                    <p className="italic mt-0.5" style={smallBodyStyle(typography, theme.body)}>
-                      Tech: {p.technologies}
-                    </p>
-                  )}
+                  <ProjectEntryFields project={p} theme={theme} typography={typography} descriptionMarker={descMarker} />
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {experiences.length > 0 && (
+        {filledExperiences(experiences).length > 0 && (
           <section className="resume-section">
             <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Internships & Training</h3>
             <div className="flex flex-col" style={itemGapStyle(spacing)}>
-              {experiences.map((exp) => (
+              {filledExperiences(experiences).map((exp) => (
                 <div key={exp.id} className="resume-entry">
-                  <div className="flex justify-between gap-2">
-                    <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                    <p style={smallBodyStyle(typography, theme.body)}>{exp.startDate} – {exp.current ? 'Present' : exp.endDate}</p>
-                  </div>
-                  <p style={bodyStyle(typography, theme.body)}>{exp.company}</p>
-                  {exp.description && <p className="mt-0.5" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
+                  <ExperienceEntryFields exp={exp} theme={theme} typography={typography} descriptionMarker={descMarker} />
                 </div>
               ))}
             </div>

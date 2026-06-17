@@ -5,6 +5,7 @@ import { mergeTypography } from '../data/typography'
 import type { ResumeTypography } from '../data/typography'
 import { defaultFresherDetails } from '../data/fresherDefaults'
 import { normalizeSectionEnabled, normalizeSectionOrder } from '../data/sectionOrder'
+import { normalizeResumeData } from './normalizeResumeData'
 import type { ResumeData, SavedResume, TemplateId } from '../types/resume.types'
 
 const STORAGE_KEY = 'resume-builder-saved'
@@ -51,7 +52,7 @@ function normalizeSavedResume(resume: SavedResume): SavedResume {
     ...resume,
     typography: mergeTypography(resume.typography),
     spacing: mergeSpacing(resume.spacing),
-    data: {
+    data: normalizeResumeData({
       ...resume.data,
       education: resume.data.education.map((edu) => ({
         ...edu,
@@ -62,7 +63,7 @@ function normalizeSavedResume(resume: SavedResume): SavedResume {
       fresherDetails: { ...defaultFresherDetails, ...resume.data.fresherDetails },
       sectionOrder: normalizeSectionOrder(resume.data.sectionOrder),
       sectionEnabled: normalizeSectionEnabled(resume.data.sectionEnabled),
-    },
+    }),
   }
 }
 

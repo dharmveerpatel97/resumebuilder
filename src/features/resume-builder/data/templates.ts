@@ -20,6 +20,7 @@ export const emptyResumeData: ResumeData = {
   fresherDetails: { ...defaultFresherDetails },
   sectionOrder: [...DEFAULT_SECTION_ORDER],
   sectionEnabled: { ...DEFAULT_SECTION_ENABLED },
+  useBulletPoints: true,
 }
 
 const createId = () => crypto.randomUUID()
@@ -260,6 +261,115 @@ export const predefinedTemplates: ResumeTemplate[] = [
       sectionOrder: [...DEFAULT_SECTION_ORDER],
       sectionEnabled: { ...DEFAULT_SECTION_ENABLED },
       fresherDetails: { ...defaultFresherDetails },
+      useBulletPoints: true,
+    },
+  },
+  {
+    id: 'compactPro',
+    name: 'Compact Pro',
+    description: 'Centered header with blue section titles — clean skills grid and structured layout.',
+    category: 'professional' as const,
+    previewColor: 'bg-blue-100',
+    defaultThemeId: 'blue',
+    defaultFontFamily: 'calibri',
+    data: {
+      personalInfo: {
+        fullName: 'Dharmveer Patel',
+        jobTitle: 'React Native Developer',
+        email: 'dharmveerpatel97@gmail.com',
+        phone: '+91-8817046783',
+        location: 'Indore, INDIA',
+        linkedin: 'linkedin.com/in/dharmveerpatel',
+        website: '',
+        summary:
+          'React Native Developer with 3+ years of experience building cross-platform mobile applications. Skilled in JavaScript, TypeScript, Redux, REST APIs, and delivering performant apps for iOS and Android. Strong problem-solving ability with a focus on clean UI and smooth user experience.',
+      },
+      experiences: [
+        {
+          id: createId(),
+          company: 'WebMobril Technologies',
+          position: 'Software Developer',
+          startDate: 'Jan 2025',
+          endDate: 'Present',
+          current: true,
+          description:
+            'Developed and maintained React Native applications for production clients.\nIntegrated REST APIs and optimized app performance.\nCollaborated with design and backend teams on feature delivery.',
+        },
+        {
+          id: createId(),
+          company: 'Protonshub Technologies',
+          position: 'React Native Developer',
+          startDate: 'Jun 2020',
+          endDate: 'Dec 2024',
+          current: false,
+          description:
+            'Built mobile apps using React Native, Redux, and JavaScript.\nImplemented reusable components and navigation flows.\nParticipated in code reviews and agile sprints.',
+        },
+      ],
+      education: [
+        {
+          id: createId(),
+          institution: 'Rajiv Gandhi Proudyogiki Vishwavidyalaya',
+          degree: 'BE',
+          field: 'Bachelor of Engineering',
+          startDate: '2015',
+          endDate: '2019',
+          gpaOutOf10: '',
+          percentage: '',
+          division: '',
+          description: '',
+        },
+      ],
+      skills: [
+        { id: createId(), name: 'React Native' },
+        { id: createId(), name: 'JavaScript' },
+        { id: createId(), name: 'TypeScript' },
+        { id: createId(), name: 'Redux' },
+        { id: createId(), name: 'REST APIs' },
+        { id: createId(), name: 'Git' },
+        { id: createId(), name: 'Firebase' },
+        { id: createId(), name: 'HTML/CSS' },
+        { id: createId(), name: 'Node.js' },
+      ],
+      projects: [
+        {
+          id: createId(),
+          name: 'On-Demand Service App',
+          description:
+            'Built a service booking app with real-time tracking and payments.\nIntegrated maps, push notifications, and multi-role user flows.\nImproved load time and reduced crash rate on Android devices.',
+          technologies: 'React Native | Redux | Firebase',
+          url: '',
+          startDate: '12 Months',
+          endDate: '',
+        },
+        {
+          id: createId(),
+          name: 'PhotoMed Pro',
+          description:
+            'Healthcare photo management app for clinics with secure image upload and patient records.',
+          technologies: 'React Native | JavaScript',
+          url: '',
+          startDate: '8 Months',
+          endDate: '',
+        },
+        {
+          id: createId(),
+          name: 'Poojat',
+          description:
+            'Frontend Developer | React-native | Javascript — temple services platform with booking and event features.',
+          technologies: '',
+          url: '',
+          startDate: '6 Months',
+          endDate: '',
+        },
+      ],
+      sectionOrder: ['summary', 'skills', 'experience', 'projects', 'education'],
+      sectionEnabled: { ...DEFAULT_SECTION_ENABLED },
+      fresherDetails: {
+        ...defaultFresherDetails,
+        languageKnowledge: 'English, Hindi',
+      },
+      useBulletPoints: true,
     },
   },
   {

@@ -76,6 +76,8 @@ export interface ResumeData {
   fresherDetails: FresherDetails
   sectionOrder: ResumeSectionId[]
   sectionEnabled: Record<ResumeSectionId, boolean>
+  /** When true, experience & project descriptions render as bullet points (one line = one point). */
+  useBulletPoints?: boolean
 }
 
 export type TemplateId =
@@ -94,6 +96,9 @@ export type TemplateId =
   | 'fresherModern'
   | 'fresherClassic'
   | 'fresherIntern'
+  | 'compactPro'
+
+import type { ResumeFontFamilyId } from '../data/typography'
 
 export type TemplateCategory = 'professional' | 'fresher'
 
@@ -104,6 +109,7 @@ export interface ResumeTemplate {
   category: TemplateCategory
   previewColor: string
   defaultThemeId: string
+  defaultFontFamily?: ResumeFontFamilyId
   data: ResumeData
 }
 
@@ -118,6 +124,7 @@ export interface SavedResume {
     body: string
   }
   typography?: {
+    fontFamily?: ResumeFontFamilyId
     heading: { fontSize: number; bold: boolean }
     subheading: { fontSize: number; bold: boolean }
     body: { fontSize: number; bold: boolean }

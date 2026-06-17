@@ -7,6 +7,8 @@ import { getMainSections } from '../../data/templateLayout'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
 
 function LeftSectionHeading({ title, style }: { title: string; style: CSSProperties }) {
   const color = typeof style.color === 'string' ? style.color : '#000'
@@ -26,9 +28,11 @@ function RightSectionHeading({ title, style }: { title: string; style: CSSProper
   )
 }
 
-export function GraphicDesignerTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function GraphicDesignerTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const body = bodyStyle(typography, theme.body)
   const sectionHeading = headingStyle(typography, theme.heading)
 
   return (
@@ -87,11 +91,11 @@ export function GraphicDesignerTemplate({ data, theme, typography, spacing }: Te
           className="w-[32%] shrink-0 border-r pr-4 flex flex-col"
           style={{ borderColor: hexToRgba(theme.heading, 0.2), ...sectionGapStyle(spacing) }}
         >
-          {isSectionEnabled(data, 'education') && education.length > 0 && (
+          {isSectionEnabled(data, 'education') && filledEducation(education).length > 0 && (
             <section>
               <LeftSectionHeading title="Education" style={sectionHeading} />
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {education.map((edu) => (
+                {filledEducation(education).map((edu) => (
                   <div key={edu.id}>
                     <p style={subheadingStyle(typography, theme.subheading)}>
                       {edu.degree}
@@ -107,11 +111,11 @@ export function GraphicDesignerTemplate({ data, theme, typography, spacing }: Te
             </section>
           )}
 
-          {isSectionEnabled(data, 'skills') && skills.length > 0 && (
+          {isSectionEnabled(data, 'skills') && filledSkills(skills).length > 0 && (
             <section>
               <LeftSectionHeading title="Skills" style={sectionHeading} />
               <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-                {skills.map((skill) => (
+                {filledSkills(skills).map((skill) => (
                   <li key={skill.id} className="flex items-start gap-1" style={bodyStyle(typography, theme.body)}>
                     <span style={{ color: theme.heading }}>•</span>
                     {skill.name}
@@ -141,27 +145,27 @@ export function GraphicDesignerTemplate({ data, theme, typography, spacing }: Te
                   <p className="leading-relaxed" style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
                 </section>
               ) : null,
-              experience: experiences.length > 0 ? (
+              experience: filledExperiences(experiences).length > 0 ? (
                 <section className="resume-section">
                   <RightSectionHeading title="Experience" style={sectionHeading} />
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {experiences.map((exp) => (
+                    {filledExperiences(experiences).map((exp) => (
                       <div key={exp.id} className="resume-entry">
                         <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
                           {exp.startDate} – {exp.current ? 'Present' : exp.endDate}
                         </p>
                         <p style={subheadingStyle(typography, theme.subheading)}>{exp.position} / {exp.company}</p>
-                        {exp.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
+                        {renderDescription(exp.description, body, descMarker, theme.heading)}
                       </div>
                     ))}
                   </div>
                 </section>
               ) : null,
-              projects: projects.length > 0 ? (
+              projects: filledProjects(projects).length > 0 ? (
                 <section className="resume-section">
                   <RightSectionHeading title="Projects" style={sectionHeading} />
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {projects.map((project) => (
+                    {filledProjects(projects).map((project) => (
                       <div key={project.id} className="resume-entry">
                         <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
                           {project.startDate}{project.endDate ? ` – ${project.endDate}` : ''}
@@ -170,7 +174,7 @@ export function GraphicDesignerTemplate({ data, theme, typography, spacing }: Te
                         {project.technologies && (
                           <p className="italic" style={{ ...smallBodyStyle(typography, theme.subheading), opacity: 0.85 }}>{project.technologies}</p>
                         )}
-                        {project.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{project.description}</p>}
+                        {renderDescription(project.description, body, descMarker, theme.heading)}
                         {project.url && <p className="mt-0.5" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{project.url}</p>}
                       </div>
                     ))}

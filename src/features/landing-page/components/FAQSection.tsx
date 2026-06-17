@@ -9,7 +9,7 @@ const faqItems = [
   {
     question: 'Can I export as PDF?',
     answer:
-      'Yes! Once you finish building your resume, click the "Download PDF" button to save a print-ready PDF file. You can also use your browser\'s print function for additional export options.',
+      'Yes! Click "Download PDF" in the builder to save a print-ready file that matches your live preview — no browser headers or URLs.',
   },
   {
     question: 'How does the ATS optimization work?',

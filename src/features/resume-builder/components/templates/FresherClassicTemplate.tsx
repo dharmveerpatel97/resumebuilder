@@ -7,10 +7,14 @@ import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import { EducationTable } from './templateParts'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
 
-export function FresherClassicTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function FresherClassicTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects, fresherDetails } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const body = bodyStyle(typography, theme.body)
   const sectionHead = headingStyle(typography, theme.heading)
 
   return (
@@ -37,11 +41,11 @@ export function FresherClassicTemplate({ data, theme, typography, spacing }: Tem
           </div>
         </section>
 
-        {isSectionEnabled(data, 'skills') && skills.length > 0 && (
+        {isSectionEnabled(data, 'skills') && filledSkills(skills).length > 0 && (
           <section className="resume-section">
             <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Skills</h3>
             <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-              {skills.map((s) => (
+              {filledSkills(skills).map((s) => (
                 <li key={s.id} style={bodyStyle(typography, theme.body)}>• {s.name}</li>
               ))}
             </ul>
@@ -68,33 +72,33 @@ export function FresherClassicTemplate({ data, theme, typography, spacing }: Tem
                 <p style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
               </section>
             ) : null,
-            education: education.length > 0 ? (
+            education: filledEducation(education).length > 0 ? (
               <section className="resume-section">
                 <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Academic Qualification</h3>
                 <EducationTable education={education} theme={theme} typography={typography} />
               </section>
             ) : null,
-            projects: projects.length > 0 ? (
+            projects: filledProjects(projects).length > 0 ? (
               <section className="resume-section">
                 <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Academic Projects</h3>
                 <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                  {projects.map((p) => (
+                  {filledProjects(projects).map((p) => (
                     <div key={p.id} className="resume-entry">
                       <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                      {p.description && <p style={bodyStyle(typography, theme.body)}>{p.description}</p>}
+                      {renderDescription(p.description, body, descMarker, theme.heading, '')}
                     </div>
                   ))}
                 </div>
               </section>
             ) : null,
-            experience: experiences.length > 0 ? (
+            experience: filledExperiences(experiences).length > 0 ? (
               <section className="resume-section">
                 <h3 className="uppercase tracking-wider font-bold mb-2" style={sectionHead}>Training / Experience</h3>
                 <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                  {experiences.map((exp) => (
+                  {filledExperiences(experiences).map((exp) => (
                     <div key={exp.id} className="resume-entry">
                       <p style={subheadingStyle(typography, theme.subheading)}>{exp.position} — {exp.company}</p>
-                      {exp.description && <p style={smallBodyStyle(typography, theme.body)}>{exp.description}</p>}
+                      {renderDescription(exp.description, smallBodyStyle(typography, theme.body), descMarker, theme.heading, '')}
                     </div>
                   ))}
                 </div>

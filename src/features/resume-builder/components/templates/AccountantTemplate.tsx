@@ -7,6 +7,8 @@ import { formatEducationGrades } from '../../utils/educationDisplay'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
 
 function SectionTitle({ title, style }: { title: string; style: React.CSSProperties }) {
   return (
@@ -16,9 +18,11 @@ function SectionTitle({ title, style }: { title: string; style: React.CSSPropert
   )
 }
 
-export function AccountantTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function AccountantTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const body = bodyStyle(typography, theme.body)
   const sectionHead = headingStyle(typography, theme.heading)
   const skillHalf = Math.ceil(skills.length / 2)
 
@@ -51,11 +55,11 @@ export function AccountantTemplate({ data, theme, typography, spacing }: Templat
                   <p style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
                 </section>
               ) : null,
-              education: education.length > 0 ? (
+              education: filledEducation(education).length > 0 ? (
                 <section className="resume-section">
                   <SectionTitle title="Education" style={sectionHead} />
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {education.map((edu) => {
+                    {filledEducation(education).map((edu) => {
                       const grades = formatEducationGrades(edu)
                       return (
                         <div key={edu.id} className="resume-entry">
@@ -73,30 +77,30 @@ export function AccountantTemplate({ data, theme, typography, spacing }: Templat
                   </div>
                 </section>
               ) : null,
-              experience: experiences.length > 0 ? (
+              experience: filledExperiences(experiences).length > 0 ? (
                 <section className="resume-section">
                   <SectionTitle title="Work Experience" style={sectionHead} />
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {experiences.map((exp) => (
+                    {filledExperiences(experiences).map((exp) => (
                       <div key={exp.id} className="resume-entry">
                         <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.8 }}>
                           {exp.company} | {exp.startDate} – {exp.current ? 'Present' : exp.endDate}
                         </p>
                         <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                        {exp.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
+                        {renderDescription(exp.description, body, descMarker, theme.heading)}
                       </div>
                     ))}
                   </div>
                 </section>
               ) : null,
-              projects: projects.length > 0 ? (
+              projects: filledProjects(projects).length > 0 ? (
                 <section className="resume-section">
                   <SectionTitle title="Projects" style={sectionHead} />
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {projects.map((p) => (
+                    {filledProjects(projects).map((p) => (
                       <div key={p.id} className="resume-entry">
                         <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                        {p.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{p.description}</p>}
+                        {renderDescription(p.description, body, descMarker, theme.heading)}
                       </div>
                     ))}
                   </div>
@@ -122,14 +126,14 @@ export function AccountantTemplate({ data, theme, typography, spacing }: Templat
             </div>
           </section>
 
-          {isSectionEnabled(data, 'skills') && skills.length > 0 && (
+          {isSectionEnabled(data, 'skills') && filledSkills(skills).length > 0 && (
             <section className="resume-section">
               <SectionTitle title="Skills" style={sectionHead} />
               {skillHalf > 0 && (
                 <>
                   <p className="font-semibold mb-1" style={subheadingStyle(typography, theme.subheading)}>Professional</p>
                   <ul className="flex flex-col mb-3" style={itemGapStyle(spacing)}>
-                    {skills.slice(0, skillHalf).map((s) => (
+                    {filledSkills(skills).slice(0, skillHalf).map((s) => (
                       <li key={s.id} style={bodyStyle(typography, theme.body)}>{s.name}</li>
                     ))}
                   </ul>
@@ -139,7 +143,7 @@ export function AccountantTemplate({ data, theme, typography, spacing }: Templat
                 <>
                   <p className="font-semibold mb-1" style={subheadingStyle(typography, theme.subheading)}>Personal</p>
                   <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {skills.slice(skillHalf).map((s) => (
+                    {filledSkills(skills).slice(skillHalf).map((s) => (
                       <li key={s.id} style={bodyStyle(typography, theme.body)}>{s.name}</li>
                     ))}
                   </ul>

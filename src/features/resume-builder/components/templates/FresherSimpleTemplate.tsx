@@ -4,9 +4,9 @@ import { OrderedSectionList } from './OrderedSectionList'
 import { buildStandardSections } from './sectionBlocks'
 import type { TemplateProps } from './types'
 
-export function FresherSimpleTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function FresherSimpleTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
 
   return (
     <div className="resume-template-root leading-relaxed resume-p flex flex-col" style={sectionGapStyle(spacing)}>

@@ -2,31 +2,43 @@ import { themeLightBg } from '../../data/themeColors'
 import { isSectionEnabled } from '../../data/sectionOrder'
 import { getMainSections } from '../../data/templateLayout'
 import { itemGapStyle, sectionGapStyle } from '../../data/spacing'
-import { bodyStyle, headingStyle, nameStyle, smallBodyStyle, subheadingStyle } from '../../data/typography'
-import { formatEducationGrades } from '../../utils/educationDisplay'
+import { bodyStyle, headingStyle, nameStyle } from '../../data/typography'
+import { getDescriptionMarker } from '../../utils/descriptionDisplay'
+import {
+  filledEducation,
+  filledExperiences,
+  filledProjects,
+  filledSkills,
+  hasText,
+} from '../../utils/resumeEntryUtils'
+import { EducationEntryFields, ExperienceEntryFields, ProjectEntryFields } from './entryFields'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import type { TemplateProps } from './types'
 
-export function ClassicTemplate({ data, theme, typography, spacing }: TemplateProps) {
-  const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+export function ClassicTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
+  const { personalInfo } = data
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const experiences = filledExperiences(data.experiences)
+  const education = filledEducation(data.education)
+  const skills = filledSkills(data.skills)
+  const projects = filledProjects(data.projects)
   const sectionHead = { ...headingStyle(typography, theme.heading), borderColor: themeLightBg(theme) }
-  const mainOrder = data.sectionOrder
 
   return (
-    <div className="resume-classic-layout resume-template-root flex leading-relaxed">
+    <div className="resume-classic-layout resume-template-root resume-col-layout leading-relaxed" style={{ ['--resume-sidebar-width' as string]: '35%' }}>
       <aside
-        className="resume-classic-sidebar w-[35%] text-white resume-p flex flex-col"
+        className="resume-classic-sidebar resume-col-sidebar text-white resume-p flex flex-col"
         style={{ backgroundColor: theme.heading, ...sectionGapStyle(spacing) }}
       >
         <h1 style={nameStyle(typography)}>{personalInfo.fullName || 'Your Name'}</h1>
         <div className="flex flex-col opacity-90" style={itemGapStyle(spacing)}>
-          {personalInfo.email && <p style={bodyStyle(typography)}>{personalInfo.email}</p>}
-          {personalInfo.phone && <p style={bodyStyle(typography)}>{personalInfo.phone}</p>}
-          {personalInfo.location && <p style={bodyStyle(typography)}>{personalInfo.location}</p>}
-          {personalInfo.linkedin && <p style={bodyStyle(typography)}>{personalInfo.linkedin}</p>}
-          {personalInfo.website && <p style={bodyStyle(typography)}>{personalInfo.website}</p>}
+          {hasText(personalInfo.email) && <p style={bodyStyle(typography)}>{personalInfo.email}</p>}
+          {hasText(personalInfo.phone) && <p style={bodyStyle(typography)}>{personalInfo.phone}</p>}
+          {hasText(personalInfo.location) && <p style={bodyStyle(typography)}>{personalInfo.location}</p>}
+          {hasText(personalInfo.linkedin) && <p style={bodyStyle(typography)}>{personalInfo.linkedin}</p>}
+          {hasText(personalInfo.website) && <p style={bodyStyle(typography)}>{personalInfo.website}</p>}
         </div>
 
         {isSectionEnabled(data, 'skills') && skills.length > 0 && (
@@ -42,31 +54,25 @@ export function ClassicTemplate({ data, theme, typography, spacing }: TemplatePr
           <div>
             <h3 className="uppercase tracking-wider mb-2 border-b border-white/30 pb-1" style={headingStyle(typography)}>Education</h3>
             <div className="flex flex-col" style={itemGapStyle(spacing)}>
-              {education.map((edu) => {
-                const grades = formatEducationGrades(edu)
-                return (
-                  <div key={edu.id}>
-                    <p style={subheadingStyle(typography)}>{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
-                    <p style={{ ...bodyStyle(typography), opacity: 0.9 }}>{edu.institution}</p>
-                    <p style={{ ...smallBodyStyle(typography), opacity: 0.75 }}>{edu.startDate} – {edu.endDate}</p>
-                    {grades && <p style={{ ...smallBodyStyle(typography), opacity: 0.75 }}>{grades}</p>}
-                  </div>
-                )
-              })}
+              {education.map((edu) => (
+                <div key={edu.id}>
+                  <EducationEntryFields edu={edu} theme={theme} typography={typography} layout="sidebar" />
+                </div>
+              ))}
             </div>
           </div>
         )}
       </aside>
 
-      <main className="resume-classic-main flex-1 resume-p">
+      <main className="resume-classic-main resume-col-main resume-p">
         <OrderedSectionList
-          order={mainOrder}
+          order={data.sectionOrder}
           enabled={data.sectionEnabled}
           onlySections={getMainSections('classic')}
           className="flex flex-col"
           style={sectionGapStyle(spacing)}
           sections={{
-            summary: personalInfo.summary ? (
+            summary: hasText(personalInfo.summary) ? (
               <section className="resume-section">
                 <h3 className="uppercase tracking-wider mb-2 border-b pb-1" style={sectionHead}>Summary</h3>
                 <p style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
@@ -78,16 +84,7 @@ export function ClassicTemplate({ data, theme, typography, spacing }: TemplatePr
                 <div className="flex flex-col" style={itemGapStyle(spacing)}>
                   {experiences.map((exp) => (
                     <div key={exp.id} className="resume-entry">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                          <p style={{ ...subheadingStyle(typography, theme.subheading), opacity: 0.85 }}>{exp.company}</p>
-                        </div>
-                        <p className="whitespace-nowrap" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                          {exp.startDate} – {exp.current ? 'Present' : exp.endDate}
-                        </p>
-                      </div>
-                      {exp.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
+                      <ExperienceEntryFields exp={exp} theme={theme} typography={typography} descriptionMarker={descMarker} />
                     </div>
                   ))}
                 </div>
@@ -99,18 +96,7 @@ export function ClassicTemplate({ data, theme, typography, spacing }: TemplatePr
                 <div className="flex flex-col" style={itemGapStyle(spacing)}>
                   {projects.map((project) => (
                     <div key={project.id} className="resume-entry">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p style={subheadingStyle(typography, theme.subheading)}>{project.name}</p>
-                          {project.technologies && (
-                            <p style={{ ...subheadingStyle(typography, theme.subheading), opacity: 0.85 }}>{project.technologies}</p>
-                          )}
-                        </div>
-                        <p className="whitespace-nowrap" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                          {project.startDate}{project.endDate ? ` – ${project.endDate}` : ''}
-                        </p>
-                      </div>
-                      {project.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{project.description}</p>}
+                      <ProjectEntryFields project={project} theme={theme} typography={typography} descriptionMarker={descMarker} />
                     </div>
                   ))}
                 </div>
@@ -121,6 +107,7 @@ export function ClassicTemplate({ data, theme, typography, spacing }: TemplatePr
           }}
         />
       </main>
+      
     </div>
   )
 }

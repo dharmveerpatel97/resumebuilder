@@ -4,6 +4,7 @@ import { hexToRgba } from '../../data/themeColors'
 import type { ResumeTypography } from '../../data/typography'
 import { bodyStyle, smallBodyStyle } from '../../data/typography'
 import type { Education } from '../../types/resume.types'
+import { degreeWithField, filledEducation, hasText } from '../../utils/resumeEntryUtils'
 
 export function PhotoPlaceholder({
   size = 88,
@@ -87,19 +88,22 @@ export function EducationTable({
         </tr>
       </thead>
       <tbody>
-        {education.map((edu, index) => (
-          <tr key={edu.id}>
-            <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>{index + 1}</td>
-            <td className="border border-gray-800 px-2 py-1" style={cellStyle}>
-              {edu.degree}{edu.field ? ` (${edu.field})` : ''}
-            </td>
-            <td className="border border-gray-800 px-2 py-1" style={cellStyle}>{edu.institution}</td>
-            <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>{edu.endDate || edu.startDate}</td>
-            <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>
-              {edu.division || (edu.percentage ? `${edu.percentage}%` : edu.gpaOutOf10 ? `${edu.gpaOutOf10}/10` : '—')}
-            </td>
-          </tr>
-        ))}
+        {filledEducation(education).map((edu, index) => {
+          const degree = degreeWithField(edu)
+          const year = edu.endDate.trim() || edu.startDate.trim()
+          const grade = edu.division.trim()
+            || (hasText(edu.percentage) ? `${edu.percentage}%` : '')
+            || (hasText(edu.gpaOutOf10) ? `${edu.gpaOutOf10}/10` : '')
+          return (
+            <tr key={edu.id}>
+              <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>{index + 1}</td>
+              <td className="border border-gray-800 px-2 py-1" style={cellStyle}>{degree ?? ''}</td>
+              <td className="border border-gray-800 px-2 py-1" style={cellStyle}>{edu.institution.trim()}</td>
+              <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>{year}</td>
+              <td className="border border-gray-800 px-2 py-1 text-center" style={cellStyle}>{grade}</td>
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )

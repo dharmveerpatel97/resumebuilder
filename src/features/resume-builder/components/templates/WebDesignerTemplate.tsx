@@ -3,9 +3,20 @@ import type { CSSProperties } from 'react'
 import { hexToRgba } from '../../data/themeColors'
 import { itemGapStyle, sectionGapStyle } from '../../data/spacing'
 import { bodyStyle, headingStyle, nameStyle, smallBodyStyle, subheadingStyle } from '../../data/typography'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import type { TemplateProps } from './types'
+import {
+  degreeWithField,
+  filledEducation,
+  filledExperiences,
+  filledProjects,
+  filledSkills,
+  formatDateRange,
+  formatProjectDateRange,
+  hasText,
+} from '../../utils/resumeEntryUtils'
 
 function SectionHeading({ title, style }: { title: string; style: CSSProperties }) {
   const color = typeof style.color === 'string' ? style.color : '#000'
@@ -17,13 +28,14 @@ function SectionHeading({ title, style }: { title: string; style: CSSProperties 
   )
 }
 
-export function WebDesignerTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function WebDesignerTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
 
   const skillColumns = (() => {
     const cols: typeof skills[] = [[], [], [], []]
-    skills.forEach((skill, i) => cols[i % 4].push(skill))
+    filledSkills(skills).forEach((skill, i) => cols[i % 4].push(skill))
     return cols
   })()
 
@@ -82,67 +94,83 @@ export function WebDesignerTemplate({ data, theme, typography, spacing }: Templa
               <p className="leading-relaxed" style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
             </section>
           ) : null,
-          education: education.length > 0 ? (
+          education: filledEducation(education).length > 0 ? (
             <section className="resume-section">
               <SectionHeading title="Education" style={sectionHeading} />
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {education.map((edu) => (
-                  <div key={edu.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
-                    <div>
-                      <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{edu.startDate} – {edu.endDate}</p>
-                      <p className="mt-0.5" style={subheadingStyle(typography, theme.subheading)}>{edu.institution}</p>
+                {filledEducation(education).map((edu) => {
+                  const dates = formatDateRange(edu.startDate, edu.endDate)
+                  const degree = degreeWithField(edu)
+                  return (
+                    <div key={edu.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
+                      <div>
+                        {dates && <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>}
+                        {hasText(edu.institution) && (
+                          <p className="mt-0.5" style={subheadingStyle(typography, theme.subheading)}>{edu.institution}</p>
+                        )}
+                      </div>
+                      <div>
+                        {degree && <p style={subheadingStyle(typography, theme.subheading)}>{degree}</p>}
+                        {hasText(edu.description) && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{edu.description}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <p style={subheadingStyle(typography, theme.subheading)}>{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
-                      {edu.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{edu.description}</p>}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           ) : null,
-          experience: experiences.length > 0 ? (
+          experience: filledExperiences(experiences).length > 0 ? (
             <section className="resume-section">
               <SectionHeading title="Experience" style={sectionHeading} />
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {experiences.map((exp) => (
-                  <div key={exp.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
-                    <div>
-                      <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{exp.startDate} – {exp.current ? 'Present' : exp.endDate}</p>
-                      <p className="mt-0.5" style={subheadingStyle(typography, theme.subheading)}>{exp.company}</p>
+                {filledExperiences(experiences).map((exp) => {
+                  const dates = formatDateRange(exp.startDate, exp.endDate, exp.current)
+                  return (
+                    <div key={exp.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
+                      <div>
+                        {dates && <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>}
+                        {hasText(exp.company) && (
+                          <p className="mt-0.5" style={subheadingStyle(typography, theme.subheading)}>{exp.company}</p>
+                        )}
+                      </div>
+                      <div>
+                        {hasText(exp.position) && <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>}
+                        {renderDescription(exp.description, bodyStyle(typography, theme.body), descMarker, theme.heading)}
+                      </div>
                     </div>
-                    <div>
-                      <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                      {exp.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           ) : null,
-          projects: projects.length > 0 ? (
+          projects: filledProjects(projects).length > 0 ? (
             <section className="resume-section">
               <SectionHeading title="Projects" style={sectionHeading} />
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {projects.map((project) => (
-                  <div key={project.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
-                    <div>
-                      <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                        {project.startDate}{project.endDate ? ` – ${project.endDate}` : ''}
-                      </p>
-                      {project.url && <p className="mt-0.5 break-all" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{project.url}</p>}
+                {filledProjects(projects).map((project) => {
+                  const dates = formatProjectDateRange(project)
+                  return (
+                    <div key={project.id} className="resume-entry grid grid-cols-[28%_1fr] gap-3">
+                      <div>
+                        {dates && <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>}
+                        {hasText(project.url) && (
+                          <p className="mt-0.5 break-all" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{project.url}</p>
+                        )}
+                      </div>
+                      <div>
+                        {hasText(project.name) && <p style={subheadingStyle(typography, theme.subheading)}>{project.name}</p>}
+                        {hasText(project.technologies) && (
+                          <p className="italic mt-0.5" style={{ ...smallBodyStyle(typography, theme.subheading), opacity: 0.85 }}>{project.technologies}</p>
+                        )}
+                        {renderDescription(project.description, bodyStyle(typography, theme.body), descMarker, theme.heading)}
+                      </div>
                     </div>
-                    <div>
-                      <p style={subheadingStyle(typography, theme.subheading)}>{project.name}</p>
-                      {project.technologies && <p className="italic mt-0.5" style={{ ...smallBodyStyle(typography, theme.subheading), opacity: 0.85 }}>{project.technologies}</p>}
-                      {project.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{project.description}</p>}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           ) : null,
-          skills: skills.length > 0 ? (
+          skills: filledSkills(skills).length > 0 ? (
             <section className="resume-section">
               <SectionHeading title="Skills" style={sectionHeading} />
               <div className="grid grid-cols-4 gap-3">

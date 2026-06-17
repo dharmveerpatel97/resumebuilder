@@ -4,47 +4,29 @@ import { bodyStyle, headingStyle, nameStyle, smallBodyStyle, subheadingStyle } f
 import { isSectionEnabled } from '../../data/sectionOrder'
 import { getMainSections } from '../../data/templateLayout'
 import { formatEducationGrades } from '../../utils/educationDisplay'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
+import { degreeWithField, filledEducation, filledExperiences, filledProjects, filledSkills, formatDateRange, formatProjectDateRange, hasText } from '../../utils/resumeEntryUtils'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import { PhotoPlaceholder, SectionLine } from './templateParts'
+import { SplittableTimelineSection } from './timelineParts'
 import type { TemplateProps } from './types'
 
-function TimelineBlock({
-  title,
-  theme,
-  typography,
-  children,
-}: {
-  title: string
-  theme: TemplateProps['theme']
-  typography: TemplateProps['typography']
-  children: React.ReactNode
-}) {
-  return (
-    <section className="resume-section flex gap-3">
-      <div
-        className="w-6 h-6 shrink-0 flex items-center justify-center text-white text-xs font-bold mt-0.5"
-        style={{ backgroundColor: theme.heading }}
-      >
-        ■
-      </div>
-      <div className="flex-1 min-w-0 pb-3 border-l-2 pl-3 -ml-px" style={{ borderColor: hexToRgba(theme.heading, 0.2) }}>
-        <SectionLine title={title} headingStyle={headingStyle(typography, theme.heading)} theme={theme} />
-        {children}
-      </div>
-    </section>
-  )
-}
-
-export function StudentPurpleTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function StudentPurpleTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const body = bodyStyle(typography, theme.body)
   const sectionHead = headingStyle(typography, theme.heading)
-  const softSkills = skills.slice(0, Math.ceil(skills.length / 2))
-  const techSkills = skills.slice(Math.ceil(skills.length / 2))
+  const allSkills = filledSkills(skills)
+  const softSkills = allSkills.slice(0, Math.ceil(allSkills.length / 2))
+  const techSkills = allSkills.slice(Math.ceil(allSkills.length / 2))
+  const eduEntries = filledEducation(education)
+  const projectEntries = filledProjects(projects)
+  const expEntries = filledExperiences(experiences)
 
   return (
-    <div className="resume-template-root leading-relaxed">
+    <div className="resume-template-root leading-relaxed" style={{ ['--resume-sidebar-width' as string]: '28%' }}>
       <div className="flex">
         <div className="w-[28%] shrink-0 resume-pt resume-px flex justify-center">
           <PhotoPlaceholder theme={theme} typography={typography} />
@@ -64,18 +46,18 @@ export function StudentPurpleTemplate({ data, theme, typography, spacing }: Temp
         </div>
       </div>
 
-      <div className="flex">
+      <div className="resume-col-layout">
         <aside
-          className="w-[28%] shrink-0 resume-p flex flex-col"
+          className="resume-col-sidebar resume-p flex flex-col"
           style={{ backgroundColor: hexToRgba(theme.heading, 0.08), ...sectionGapStyle(spacing) }}
         >
           <div className="resume-section">
             <SectionLine title="Contact" headingStyle={sectionHead} theme={theme} />
             <div className="flex flex-col" style={itemGapStyle(spacing)}>
-              {personalInfo.phone && <p style={bodyStyle(typography, theme.body)}>{personalInfo.phone}</p>}
-              {personalInfo.email && <p style={bodyStyle(typography, theme.body)}>{personalInfo.email}</p>}
-              {personalInfo.location && <p style={bodyStyle(typography, theme.body)}>{personalInfo.location}</p>}
-              {personalInfo.website && <p style={bodyStyle(typography, theme.body)}>{personalInfo.website}</p>}
+              {hasText(personalInfo.phone) && <p style={bodyStyle(typography, theme.body)}>{personalInfo.phone}</p>}
+              {hasText(personalInfo.email) && <p style={bodyStyle(typography, theme.body)}>{personalInfo.email}</p>}
+              {hasText(personalInfo.location) && <p style={bodyStyle(typography, theme.body)}>{personalInfo.location}</p>}
+              {hasText(personalInfo.website) && <p style={bodyStyle(typography, theme.body)}>{personalInfo.website}</p>}
             </div>
           </div>
 
@@ -102,73 +84,80 @@ export function StudentPurpleTemplate({ data, theme, typography, spacing }: Temp
           )}
         </aside>
 
-        <main className="flex-1 resume-p flex flex-col" style={sectionGapStyle(spacing)}>
+        <main className="resume-col-main resume-p flex flex-col" style={sectionGapStyle(spacing)}>
           <OrderedSectionList
             order={data.sectionOrder}
             enabled={data.sectionEnabled}
             onlySections={getMainSections('studentPurple')}
             sections={{
-              summary: personalInfo.summary ? (
-                <TimelineBlock title="Profile" theme={theme} typography={typography}>
+              summary: hasText(personalInfo.summary) ? (
+                <SplittableTimelineSection title="Profile" theme={theme} typography={typography}>
                   <p style={bodyStyle(typography, theme.body)}>{personalInfo.summary}</p>
-                </TimelineBlock>
+                </SplittableTimelineSection>
               ) : null,
-              education: education.length > 0 ? (
-                <TimelineBlock title="Education" theme={theme} typography={typography}>
+              education: eduEntries.length > 0 ? (
+                <SplittableTimelineSection title="Education" theme={theme} typography={typography}>
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {education.map((edu) => {
+                    {eduEntries.map((edu) => {
                       const grades = formatEducationGrades(edu)
+                      const degree = degreeWithField(edu)
+                      const dates = formatDateRange(edu.startDate, edu.endDate)
                       return (
                         <div key={edu.id} className="resume-entry">
-                          <div className="flex justify-between gap-2">
-                            <p style={subheadingStyle(typography, theme.subheading)}>
-                              {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
-                            </p>
-                            <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                              {edu.startDate} – {edu.endDate}
-                            </p>
-                          </div>
-                          <p style={bodyStyle(typography, theme.body)}>{edu.institution}</p>
+                          {(degree || dates) && (
+                            <div className="flex justify-between gap-2">
+                              {degree && <p style={subheadingStyle(typography, theme.subheading)}>{degree}</p>}
+                              {dates && <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>}
+                            </div>
+                          )}
+                          {hasText(edu.institution) && <p style={bodyStyle(typography, theme.body)}>{edu.institution}</p>}
                           {grades && <p style={smallBodyStyle(typography, theme.body)}>{grades}</p>}
                         </div>
                       )
                     })}
                   </div>
-                </TimelineBlock>
+                </SplittableTimelineSection>
               ) : null,
-              projects: projects.length > 0 ? (
-                <TimelineBlock title="Projects" theme={theme} typography={typography}>
+              projects: projectEntries.length > 0 ? (
+                <SplittableTimelineSection title="Projects" theme={theme} typography={typography}>
                   <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {projects.map((p) => (
-                      <div key={p.id} className="resume-entry">
-                        <div className="flex justify-between gap-2">
-                          <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                          <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                            {p.startDate}{p.endDate ? ` – ${p.endDate}` : ''}
-                          </p>
+                    {projectEntries.map((p) => {
+                      const dates = formatProjectDateRange(p)
+                      return (
+                        <div key={p.id} className="resume-entry">
+                          {(hasText(p.name) || dates) && (
+                            <div className="flex justify-between gap-2">
+                              {hasText(p.name) && <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>}
+                              {dates && <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>}
+                            </div>
+                          )}
+                          {renderDescription(p.description, body, descMarker, theme.heading)}
+                          {hasText(p.technologies) && (
+                            <p className="italic mt-0.5" style={smallBodyStyle(typography, theme.body)}>
+                              Technologies: {p.technologies}
+                            </p>
+                          )}
                         </div>
-                        {p.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{p.description}</p>}
-                        {p.technologies && (
-                          <p className="italic mt-0.5" style={smallBodyStyle(typography, theme.body)}>
-                            Technologies: {p.technologies}
+                      )
+                    })}
+                  </div>
+                </SplittableTimelineSection>
+              ) : null,
+              experience: expEntries.length > 0 ? (
+                <SplittableTimelineSection title="Achievements" theme={theme} typography={typography}>
+                  <div className="flex flex-col" style={itemGapStyle(spacing)}>
+                    {expEntries.map((exp) => (
+                      <div key={exp.id} className="resume-entry">
+                        {(hasText(exp.position) || hasText(exp.company)) && (
+                          <p style={subheadingStyle(typography, theme.subheading)}>
+                            {[exp.position, exp.company].filter(hasText).join(' — ')}
                           </p>
                         )}
+                        {renderDescription(exp.description, body, descMarker, theme.heading, 'mt-0.5')}
                       </div>
                     ))}
                   </div>
-                </TimelineBlock>
-              ) : null,
-              experience: experiences.length > 0 ? (
-                <TimelineBlock title="Achievements" theme={theme} typography={typography}>
-                  <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                    {experiences.map((exp) => (
-                      <div key={exp.id} className="resume-entry">
-                        <p style={subheadingStyle(typography, theme.subheading)}>{exp.position} — {exp.company}</p>
-                        {exp.description && <p className="mt-0.5" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </TimelineBlock>
+                </SplittableTimelineSection>
               ) : null,
               personalDetails: personalDetailsBlock(props),
               declaration: declarationBlock(props),

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useReactToPrint } from 'react-to-print'
 import { ArrowLeft, Download, FileText, Save, ZoomIn, ZoomOut } from 'lucide-react'
 import { Button } from '../../components/ui'
 import { calcFitZoom, PreviewScaler } from './components/PreviewScaler'
@@ -10,13 +9,15 @@ import { SavedResumesList } from './components/SavedResumesList'
 import { TemplateThumbnail } from './components/TemplateThumbnail'
 import { emptyResumeData, predefinedTemplates, templatesByCategory } from './data/templates'
 import { normalizeSectionEnabled, normalizeSectionOrder } from './data/sectionOrder'
+import { normalizeResumeData } from './utils/normalizeResumeData'
 import { getThemeFromPresetId } from './data/themeColors'
 import type { ResumeTheme } from './data/themeColors'
 import { defaultSpacing } from './data/spacing'
 import type { ResumeSpacing } from './data/spacing'
-import { defaultTypography } from './data/typography'
+import { defaultTypography, loadResumeFont, mergeTypography } from './data/typography'
 import type { ResumeTypography } from './data/typography'
 import type { ResumeData, SavedResume, TemplateId } from './types/resume.types'
+import { downloadResumePdf } from './utils/downloadResumePdf'
 import {
   deleteSavedResume,
   getSavedResumes,
@@ -37,8 +38,9 @@ export function ResumeBuilderPage() {
   const [zoom, setZoom] = useState(0.45)
   const [userAdjustedZoom, setUserAdjustedZoom] = useState(false)
   const [previewPageCount, setPreviewPageCount] = useState(1)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit')
-  const printRef = useRef<HTMLDivElement>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
   const previewContainerRef = useRef<HTMLDivElement>(null)
 
   const ZOOM_MIN = 0.28
@@ -77,6 +79,10 @@ export function ResumeBuilderPage() {
   }, [saveMessage])
 
   useEffect(() => {
+    loadResumeFont(typography.fontFamily)
+  }, [typography.fontFamily])
+
+  useEffect(() => {
     if (showTemplatePicker) {
       setSavedResumes(getSavedResumes())
     }
@@ -105,50 +111,42 @@ export function ResumeBuilderPage() {
   const handleTemplateChange = (id: TemplateId) => {
     setTemplateId(id)
     const template = predefinedTemplates.find((t) => t.id === id)
-    if (template) applyPreset(template.defaultThemeId)
+    if (template) {
+      applyPreset(template.defaultThemeId)
+      if (template.defaultFontFamily) {
+        setTypography((prev) => ({ ...prev, fontFamily: template.defaultFontFamily! }))
+      }
+    }
   }
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: resumeData.personalInfo.fullName
-      ? `${resumeData.personalInfo.fullName} - Resume`
-      : 'My Resume',
-    pageStyle: `
-      @page { size: A4; margin: 0; }
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      html, body {
-        width: 210mm;
-        height: auto;
-        margin: 0 auto !important;
-        padding: 0 !important;
-      }
-      .resume-paper {
-        width: 210mm !important;
-        margin: 0 auto !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        overflow: visible !important;
-      }
-      .resume-p { padding: 10mm !important; }
-      .resume-px { padding-left: 10mm !important; padding-right: 10mm !important; }
-      .resume-py { padding-top: 10mm !important; padding-bottom: 10mm !important; }
-      .resume-pt { padding-top: 10mm !important; }
-      .resume-pb { padding-bottom: 10mm !important; }
-    `,
-  })
+  const handleDownloadPdf = async () => {
+    const el = exportRef.current
+    if (!el || downloadingPdf) return
+    setDownloadingPdf(true)
+    try {
+      const baseName = resumeData.personalInfo.fullName.trim() || 'Resume'
+      await downloadResumePdf(el, `${baseName}.pdf`)
+    } catch {
+      setSaveMessage('PDF download failed. Please try again.')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
 
   const loadTemplate = (id: TemplateId) => {
     const template = predefinedTemplates.find((t) => t.id === id)
     if (template) {
-      setResumeData({
+      setResumeData(normalizeResumeData({
         ...structuredClone(template.data),
         sectionOrder: normalizeSectionOrder(template.data.sectionOrder),
         sectionEnabled: normalizeSectionEnabled(template.data.sectionEnabled),
-      })
+      }))
       setTemplateId(id)
       applyPreset(template.defaultThemeId)
-      setTypography(structuredClone(defaultTypography))
+      setTypography({
+        ...structuredClone(defaultTypography),
+        fontFamily: template.defaultFontFamily ?? defaultTypography.fontFamily,
+      })
       setSpacing(structuredClone(defaultSpacing))
       setCurrentSavedId(null)
       setShowTemplatePicker(false)
@@ -169,7 +167,7 @@ export function ResumeBuilderPage() {
     setTemplateId(saved.templateId)
     setTheme({ ...saved.theme })
     setPresetId(saved.presetId)
-    setTypography(structuredClone(saved.typography ?? defaultTypography))
+    setTypography(mergeTypography(saved.typography))
     setSpacing(structuredClone(saved.spacing ?? defaultSpacing))
     setCurrentSavedId(saved.id)
     setShowTemplatePicker(false)
@@ -358,10 +356,10 @@ export function ResumeBuilderPage() {
               </span>
               <span className="sm:hidden">Save</span>
             </Button>
-            <Button onClick={() => handlePrint()} className="shrink-0">
+            <Button onClick={handleDownloadPdf} disabled={downloadingPdf} className="shrink-0">
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Download PDF</span>
-              <span className="sm:hidden">PDF</span>
+              <span className="hidden sm:inline">{downloadingPdf ? 'Generating…' : 'Download PDF'}</span>
+              <span className="sm:hidden">{downloadingPdf ? '…' : 'PDF'}</span>
             </Button>
           </div>
         </div>
@@ -420,7 +418,7 @@ export function ResumeBuilderPage() {
           >
             <PreviewScaler zoom={zoom} onPageCountChange={setPreviewPageCount}>
               <ResumePreview
-                ref={printRef}
+                ref={exportRef}
                 data={resumeData}
                 templateId={templateId}
                 theme={theme}

@@ -6,6 +6,8 @@ import { formatEducationGrades } from '../../utils/educationDisplay'
 import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker, renderDescription } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
 
 function GridCell({
   title,
@@ -28,9 +30,11 @@ function GridCell({
   )
 }
 
-export function GridInteriorTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function GridInteriorTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
+  const body = bodyStyle(typography, theme.body)
   const sectionHead = headingStyle(typography, theme.heading)
   const skillHalf = Math.ceil(skills.length / 2)
 
@@ -63,10 +67,10 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
 
       <div className="grid grid-cols-[32%_1fr]">
         <div className="border-r border-black flex flex-col">
-          {isSectionEnabled(data, 'skills') && skills.length > 0 && (
+          {isSectionEnabled(data, 'skills') && filledSkills(skills).length > 0 && (
             <GridCell title="Skills" headingStyleProp={sectionHead} className="border-0 border-b border-black rounded-none">
               <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-                {skills.slice(0, skillHalf).map((s) => (
+                {filledSkills(skills).slice(0, skillHalf).map((s) => (
                   <li key={s.id} style={bodyStyle(typography, theme.body)}>• {s.name}</li>
                 ))}
               </ul>
@@ -75,16 +79,16 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
           {isSectionEnabled(data, 'skills') && skills.length > skillHalf && (
             <GridCell title="Design Tools" headingStyleProp={sectionHead} className="border-0 border-b border-black rounded-none">
               <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-                {skills.slice(skillHalf).map((s) => (
+                {filledSkills(skills).slice(skillHalf).map((s) => (
                   <li key={s.id} style={bodyStyle(typography, theme.body)}>• {s.name}</li>
                 ))}
               </ul>
             </GridCell>
           )}
-          {isSectionEnabled(data, 'education') && education.length > 0 && (
+          {isSectionEnabled(data, 'education') && filledEducation(education).length > 0 && (
             <GridCell title="Education" headingStyleProp={sectionHead} className="border-0 border-b border-black rounded-none">
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
-                {education.map((edu) => {
+                {filledEducation(education).map((edu) => {
                   const grades = formatEducationGrades(edu)
                   return (
                     <div key={edu.id} className="resume-entry">
@@ -100,9 +104,9 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
               </div>
             </GridCell>
           )}
-          {isSectionEnabled(data, 'projects') && projects[0] && (
+          {isSectionEnabled(data, 'projects') && filledProjects(projects)[0] && (
             <GridCell title="Achievements" headingStyleProp={sectionHead} className="border-0 rounded-none flex-1">
-              <p style={bodyStyle(typography, theme.body)}>{projects[0].description}</p>
+              <p style={bodyStyle(typography, theme.body)}>{filledProjects(projects)[0].description}</p>
             </GridCell>
           )}
         </div>
@@ -114,10 +118,10 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
             onlySections={getMainSections('gridInterior')}
             className="flex flex-col"
             sections={{
-              experience: experiences.length > 0 ? (
+              experience: filledExperiences(experiences).length > 0 ? (
                 <GridCell title="Experience" headingStyleProp={sectionHead} className="border-0 border-b border-black rounded-none">
                   <div className="flex flex-col" style={{ ...sectionGapStyle(spacing) }}>
-                    {experiences.map((exp) => (
+                    {filledExperiences(experiences).map((exp) => (
                       <div key={exp.id} className="resume-entry">
                         <div className="flex justify-between gap-2">
                           <p className="uppercase font-bold" style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
@@ -126,7 +130,7 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
                           </p>
                         </div>
                         <p className="italic" style={bodyStyle(typography, theme.body)}>{exp.company}</p>
-                        {exp.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{exp.description}</p>}
+                        {renderDescription(exp.description, body, descMarker, theme.heading)}
                       </div>
                     ))}
                   </div>
@@ -138,7 +142,7 @@ export function GridInteriorTemplate({ data, theme, typography, spacing }: Templ
                     {projects.slice(1).map((p) => (
                       <div key={p.id} className="resume-entry">
                         <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                        {p.description && <p style={bodyStyle(typography, theme.body)}>{p.description}</p>}
+                        {renderDescription(p.description, body, descMarker, theme.heading, '')}
                       </div>
                     ))}
                   </div>

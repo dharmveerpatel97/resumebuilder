@@ -1,4 +1,10 @@
 import type { FresherDetails, ResumeData, ResumeSectionId } from '../types/resume.types'
+import {
+  hasFilledEducation,
+  hasFilledExperiences,
+  hasFilledProjects,
+  hasFilledSkills,
+} from '../utils/resumeEntryUtils'
 
 export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
   'summary',
@@ -89,13 +95,13 @@ export function isSectionVisible(data: ResumeData, id: ResumeSectionId): boolean
     case 'summary':
       return Boolean(data.personalInfo.summary.trim())
     case 'education':
-      return data.education.length > 0
+      return hasFilledEducation(data)
     case 'experience':
-      return data.experiences.length > 0
+      return hasFilledExperiences(data)
     case 'skills':
-      return data.skills.length > 0
+      return hasFilledSkills(data)
     case 'projects':
-      return data.projects.length > 0
+      return hasFilledProjects(data)
     case 'personalDetails':
       return hasPersonalDetails(data.fresherDetails)
     case 'declaration':

@@ -1,4 +1,5 @@
 import type { TemplateId } from '../../types/resume.types'
+import { CompactProTemplate } from './CompactProTemplate'
 import { AccountantTemplate } from './AccountantTemplate'
 import { ClassicTemplate } from './ClassicTemplate'
 import { FresherClassicTemplate } from './FresherClassicTemplate'
@@ -31,6 +32,7 @@ export const templateComponents = {
   fresherModern: FresherModernTemplate,
   fresherClassic: FresherClassicTemplate,
   fresherIntern: FresherInternTemplate,
+  compactPro: CompactProTemplate,
 } as const
 
 export function getTemplateComponent(id: TemplateId) {

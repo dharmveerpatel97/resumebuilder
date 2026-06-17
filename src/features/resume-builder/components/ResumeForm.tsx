@@ -284,6 +284,23 @@ export function ResumeForm({
         />
       </FormSection>
 
+      <FormSection title="Description Format">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={data.useBulletPoints ?? true}
+            onChange={(e) => onChange({ ...data, useBulletPoints: e.target.checked })}
+            className="mt-0.5 rounded border-border text-primary focus:ring-primary/20"
+          />
+          <span>
+            <span className="text-sm font-medium text-text-body block">Show bullet points in Experience & Projects</span>
+            <span className="text-xs text-text-muted mt-0.5 block">
+              When enabled, each line in the description field becomes a separate bullet point in the preview.
+            </span>
+          </span>
+        </label>
+      </FormSection>
+
       <FormSection
         title="Experience"
         subtitle={data.experiences.length > 0 ? `${data.experiences.length} added` : undefined}
@@ -346,7 +363,7 @@ export function ResumeForm({
               label="Description"
               value={exp.description}
               onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-              placeholder="Describe your responsibilities and achievements..."
+              placeholder={data.useBulletPoints ? 'One point per line:\nLed a team of 5 developers\nImproved performance by 40%' : 'Describe your responsibilities and achievements...'}
               rows={3}
             />
           </div>
@@ -526,7 +543,7 @@ export function ResumeForm({
               label="Description"
               value={project.description}
               onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-              placeholder="Describe the project and your contributions..."
+              placeholder={data.useBulletPoints ? 'One point per line:\nBuilt REST APIs with Node.js\nDeployed on AWS' : 'Describe the project and your contributions...'}
               rows={3}
             />
           </div>

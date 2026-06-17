@@ -8,6 +8,17 @@ import { OrderedSectionList } from './OrderedSectionList'
 import { declarationBlock, personalDetailsBlock } from './sectionBlocks'
 import { PhotoPlaceholder, SectionLine } from './templateParts'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker, renderDescription, type DescriptionMarker } from '../../utils/descriptionDisplay'
+import {
+  degreeWithField,
+  filledEducation,
+  filledExperiences,
+  filledProjects,
+  filledSkills,
+  formatDateRange,
+  formatProjectDateRange,
+  hasText,
+} from '../../utils/resumeEntryUtils'
 
 function TimelineItem({
   title,
@@ -17,6 +28,7 @@ function TimelineItem({
   grades,
   theme,
   typography,
+  descriptionMarker,
   isLast,
 }: {
   title: string
@@ -26,6 +38,7 @@ function TimelineItem({
   grades?: string | null
   theme: TemplateProps['theme']
   typography: TemplateProps['typography']
+  descriptionMarker: DescriptionMarker
   isLast?: boolean
 }) {
   return (
@@ -40,33 +53,34 @@ function TimelineItem({
         )}
       </div>
       <div className="flex-1 min-w-0 pb-4">
-        <div className="flex justify-between gap-2 items-start">
-          <div>
-            <p style={subheadingStyle(typography, theme.subheading)}>{title}</p>
-            <p className="italic" style={{ ...bodyStyle(typography, theme.body), opacity: 0.9 }}>
-              {subtitle}
-            </p>
+        {(hasText(title) || hasText(subtitle) || hasText(dates)) && (
+          <div className="flex justify-between gap-2 items-start">
+            <div>
+              {hasText(title) && <p style={subheadingStyle(typography, theme.subheading)}>{title}</p>}
+              {hasText(subtitle) && (
+                <p className="italic" style={{ ...bodyStyle(typography, theme.body), opacity: 0.9 }}>{subtitle}</p>
+              )}
+            </div>
+            {hasText(dates) && (
+              <p className="whitespace-nowrap shrink-0" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
+                {dates}
+              </p>
+            )}
           </div>
-          <p className="whitespace-nowrap shrink-0" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-            {dates}
-          </p>
-        </div>
+        )}
         {grades && (
-          <p className="mt-0.5" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.8 }}>
-            {grades}
-          </p>
+          <p className="mt-0.5" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.8 }}>{grades}</p>
         )}
-        {description && (
-          <p className="mt-1" style={bodyStyle(typography, theme.body)}>{description}</p>
-        )}
+        {description && renderDescription(description, bodyStyle(typography, theme.body), descriptionMarker, theme.heading)}
       </div>
     </div>
   )
 }
 
-export function MarketingTimelineTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function MarketingTimelineTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
   const sectionHead = headingStyle(typography, theme.heading)
 
   return (
@@ -114,11 +128,11 @@ export function MarketingTimelineTemplate({ data, theme, typography, spacing }: 
           </div>
         )}
 
-        {isSectionEnabled(data, 'skills') && skills.length > 0 && (
+        {isSectionEnabled(data, 'skills') && filledSkills(skills).length > 0 && (
           <div className="resume-section">
             <SectionLine title="Skills" headingStyle={sectionHead} theme={theme} />
             <ul className="flex flex-col" style={itemGapStyle(spacing)}>
-              {skills.map((s) => (
+              {filledSkills(skills).map((s) => (
                 <li key={s.id} style={bodyStyle(typography, theme.body)}>• {s.name}</li>
               ))}
             </ul>
@@ -132,54 +146,57 @@ export function MarketingTimelineTemplate({ data, theme, typography, spacing }: 
           enabled={data.sectionEnabled}
           onlySections={getMainSections('marketingTimeline')}
           sections={{
-            education: education.length > 0 ? (
+            education: filledEducation(education).length > 0 ? (
               <section className="resume-section">
                 <SectionLine title="Education" headingStyle={sectionHead} theme={theme} />
-                {education.map((edu, i) => (
+                {filledEducation(education).map((edu, i, arr) => (
                   <TimelineItem
                     key={edu.id}
-                    title={`${edu.degree}${edu.field ? ` in ${edu.field}` : ''}`}
+                    title={degreeWithField(edu) ?? ''}
                     subtitle={edu.institution}
-                    dates={`${edu.startDate} – ${edu.endDate}`}
+                    dates={formatDateRange(edu.startDate, edu.endDate) ?? ''}
                     description={edu.description}
                     grades={formatEducationGrades(edu)}
                     theme={theme}
                     typography={typography}
-                    isLast={i === education.length - 1}
+                    descriptionMarker={descMarker}
+                    isLast={i === arr.length - 1}
                   />
                 ))}
               </section>
             ) : null,
-            experience: experiences.length > 0 ? (
+            experience: filledExperiences(experiences).length > 0 ? (
               <section className="resume-section">
                 <SectionLine title="Experience" headingStyle={sectionHead} theme={theme} />
-                {experiences.map((exp, i) => (
+                {filledExperiences(experiences).map((exp, i, arr) => (
                   <TimelineItem
                     key={exp.id}
                     title={exp.position}
                     subtitle={exp.company}
-                    dates={`${exp.startDate} – ${exp.current ? 'Present' : exp.endDate}`}
+                    dates={formatDateRange(exp.startDate, exp.endDate, exp.current) ?? ''}
                     description={exp.description}
                     theme={theme}
                     typography={typography}
-                    isLast={i === experiences.length - 1}
+                    descriptionMarker={descMarker}
+                    isLast={i === arr.length - 1}
                   />
                 ))}
               </section>
             ) : null,
-            projects: projects.length > 0 ? (
+            projects: filledProjects(projects).length > 0 ? (
               <section className="resume-section">
                 <SectionLine title="Projects" headingStyle={sectionHead} theme={theme} />
-                {projects.map((p, i) => (
+                {filledProjects(projects).map((p, i, arr) => (
                   <TimelineItem
                     key={p.id}
                     title={p.name}
                     subtitle={p.technologies ?? ''}
-                    dates={`${p.startDate}${p.endDate ? ` – ${p.endDate}` : ''}`}
+                    dates={formatProjectDateRange(p) ?? ''}
                     description={p.description}
                     theme={theme}
                     typography={typography}
-                    isLast={i === projects.length - 1}
+                    descriptionMarker={descMarker}
+                    isLast={i === arr.length - 1}
                   />
                 ))}
               </section>

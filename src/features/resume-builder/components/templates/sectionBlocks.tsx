@@ -1,17 +1,30 @@
 import type { CSSProperties, ReactNode } from 'react'
-import type { ResumeData } from '../../types/resume.types'
+import type { ResumeData, TemplateId } from '../../types/resume.types'
 import type { ResumeTheme } from '../../data/themeColors'
 import type { ResumeSpacing } from '../../data/spacing'
 import { itemGapStyle } from '../../data/spacing'
 import { bodyStyle, headingStyle as headingStyleFn, smallBodyStyle, subheadingStyle } from '../../data/typography'
 import type { ResumeTypography } from '../../data/typography'
+import { getDescriptionMarker, renderDescription, type DescriptionMarker } from '../../utils/descriptionDisplay'
 import { formatEducationGrades } from '../../utils/educationDisplay'
+import {
+  degreeWithField,
+  filledEducation,
+  filledExperiences,
+  filledProjects,
+  filledSkills,
+  formatDateRange,
+  formatProjectDateRange,
+  hasText,
+  joinParts,
+} from '../../utils/resumeEntryUtils'
 import { EducationTable, FresherSectionHeading } from './templateParts'
 
 export type SectionHeadingVariant = 'standard' | 'fresher'
 
 type BlockProps = {
   data: ResumeData
+  templateId: TemplateId
   theme: ResumeTheme
   typography: ResumeTypography
   spacing: ResumeSpacing
@@ -22,6 +35,7 @@ type BuildOptions = {
   experienceBullets?: boolean
   skillsBullets?: boolean
   headingVariant?: SectionHeadingVariant
+  descriptionMarker?: DescriptionMarker
 }
 
 function SectionHeading({
@@ -40,7 +54,7 @@ function SectionHeading({
 }
 
 function DetailRow({ label, value, style }: { label: string; value: string; style: CSSProperties }) {
-  if (!value) return null
+  if (!hasText(value)) return null
   return <p style={style}><span className="font-semibold">{label}:</span> {value}</p>
 }
 
@@ -50,7 +64,7 @@ export function summaryBlock(
   headStyle?: CSSProperties,
   variant: SectionHeadingVariant = 'standard',
 ): ReactNode {
-  if (!data.personalInfo.summary) return null
+  if (!hasText(data.personalInfo.summary)) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
   return (
     <section className="resume-section">
@@ -67,33 +81,35 @@ export function educationBlock(
   useTable = false,
   variant: SectionHeadingVariant = 'standard',
 ): ReactNode {
-  if (data.education.length === 0) return null
+  const entries = filledEducation(data.education)
+  if (entries.length === 0) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
   return (
     <section className="resume-section">
       <SectionHeading title={title} headStyle={head} variant={variant} />
       {useTable ? (
-        <EducationTable education={data.education} theme={theme} typography={typography} />
+        <EducationTable education={entries} theme={theme} typography={typography} />
       ) : (
         <div className="flex flex-col" style={itemGapStyle(spacing)}>
-          {data.education.map((edu) => {
+          {entries.map((edu) => {
             const grades = formatEducationGrades(edu)
+            const degree = degreeWithField(edu)
+            const dates = formatDateRange(edu.startDate, edu.endDate)
+            const meta = joinParts([edu.institution, edu.division, grades], ' · ')
             return (
               <div key={edu.id} className="resume-entry">
-                <div className="flex justify-between gap-2">
-                  <p style={subheadingStyle(typography, theme.subheading)}>
-                    {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
-                  </p>
-                  <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                    {edu.startDate} – {edu.endDate}
-                  </p>
-                </div>
-                <p style={bodyStyle(typography, theme.body)}>
-                  {edu.institution}
-                  {edu.division ? ` · ${edu.division}` : ''}
-                  {grades ? ` · ${grades}` : ''}
-                </p>
-                {edu.description && <p className="mt-0.5" style={smallBodyStyle(typography, theme.body)}>{edu.description}</p>}
+                {(degree || dates) && (
+                  <div className="flex justify-between gap-2">
+                    {degree && <p style={subheadingStyle(typography, theme.subheading)}>{degree}</p>}
+                    {dates && (
+                      <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>
+                    )}
+                  </div>
+                )}
+                {meta && <p style={bodyStyle(typography, theme.body)}>{meta}</p>}
+                {hasText(edu.description) && (
+                  <p className="mt-0.5" style={smallBodyStyle(typography, theme.body)}>{edu.description}</p>
+                )}
               </div>
             )
           })}
@@ -109,8 +125,10 @@ export function experienceBlock(
   headStyle?: CSSProperties,
   bulletList = false,
   variant: SectionHeadingVariant = 'standard',
+  descriptionMarker: DescriptionMarker = 'none',
 ): ReactNode {
-  if (data.experiences.length === 0) return null
+  const entries = filledExperiences(data.experiences)
+  if (entries.length === 0) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
   const body = bodyStyle(typography, theme.body)
   return (
@@ -118,24 +136,35 @@ export function experienceBlock(
       <SectionHeading title={title} headStyle={head} variant={variant} />
       {bulletList ? (
         <ul className="list-disc pl-5 flex flex-col" style={itemGapStyle(spacing)}>
-          {data.experiences.map((exp) => (
-            <li key={exp.id} style={body}>{exp.description || `${exp.position} at ${exp.company}`}</li>
+          {entries.map((exp) => (
+            <li key={exp.id} style={body}>
+              {hasText(exp.description)
+                ? exp.description
+                : joinParts([exp.position, exp.company], ' at ') ?? 'Experience'}
+            </li>
           ))}
         </ul>
       ) : (
         <div className="flex flex-col" style={itemGapStyle(spacing)}>
-          {data.experiences.map((exp) => (
-            <div key={exp.id} className="resume-entry">
-              <div className="flex justify-between gap-2">
-                <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                  {exp.startDate} – {exp.current ? 'Present' : exp.endDate}
-                </p>
+          {entries.map((exp) => {
+            const dates = formatDateRange(exp.startDate, exp.endDate, exp.current)
+            return (
+              <div key={exp.id} className="resume-entry">
+                {(hasText(exp.position) || dates) && (
+                  <div className="flex justify-between gap-2">
+                    {hasText(exp.position) && (
+                      <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
+                    )}
+                    {dates && (
+                      <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>
+                    )}
+                  </div>
+                )}
+                {hasText(exp.company) && <p className="italic" style={body}>{exp.company}</p>}
+                {renderDescription(exp.description, body, descriptionMarker, theme.heading)}
               </div>
-              <p className="italic" style={body}>{exp.company}</p>
-              {exp.description && <p className="mt-1" style={body}>{exp.description}</p>}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>
@@ -149,17 +178,18 @@ export function skillsBlock(
   listStyle: 'inline' | 'bullet' = 'inline',
   variant: SectionHeadingVariant = 'standard',
 ): ReactNode {
-  if (data.skills.length === 0) return null
+  const entries = filledSkills(data.skills)
+  if (entries.length === 0) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
   return (
     <section className="resume-section">
       <SectionHeading title={title} headStyle={head} variant={variant} />
       {listStyle === 'bullet' ? (
         <ul className="list-disc pl-5 flex flex-col" style={itemGapStyle(spacing)}>
-          {data.skills.map((s) => <li key={s.id} style={bodyStyle(typography, theme.body)}>{s.name}</li>)}
+          {entries.map((s) => <li key={s.id} style={bodyStyle(typography, theme.body)}>{s.name}</li>)}
         </ul>
       ) : (
-        <p style={bodyStyle(typography, theme.body)}>{data.skills.map((s) => s.name).join(' · ')}</p>
+        <p style={bodyStyle(typography, theme.body)}>{entries.map((s) => s.name).join(' · ')}</p>
       )}
     </section>
   )
@@ -170,25 +200,35 @@ export function projectsBlock(
   title = 'Projects',
   headStyle?: CSSProperties,
   variant: SectionHeadingVariant = 'standard',
+  descriptionMarker: DescriptionMarker = 'none',
 ): ReactNode {
-  if (data.projects.length === 0) return null
+  const entries = filledProjects(data.projects)
+  if (entries.length === 0) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
+  const body = bodyStyle(typography, theme.body)
   return (
     <section className="resume-section">
       <SectionHeading title={title} headStyle={head} variant={variant} />
       <div className="flex flex-col" style={itemGapStyle(spacing)}>
-        {data.projects.map((p) => (
-          <div key={p.id} className="resume-entry">
-            <div className="flex justify-between gap-2">
-              <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-              <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>
-                {p.startDate}{p.endDate ? ` – ${p.endDate}` : ''}
-              </p>
+        {entries.map((p) => {
+          const dates = formatProjectDateRange(p)
+          return (
+            <div key={p.id} className="resume-entry">
+              {(hasText(p.name) || dates) && (
+                <div className="flex justify-between gap-2">
+                  {hasText(p.name) && <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>}
+                  {dates && (
+                    <p style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.75 }}>{dates}</p>
+                  )}
+                </div>
+              )}
+              {hasText(p.technologies) && (
+                <p className="italic" style={smallBodyStyle(typography, theme.body)}>Technologies: {p.technologies}</p>
+              )}
+              {renderDescription(p.description, body, descriptionMarker, theme.heading)}
             </div>
-            {p.technologies && <p className="italic" style={smallBodyStyle(typography, theme.body)}>Technologies: {p.technologies}</p>}
-            {p.description && <p className="mt-1" style={bodyStyle(typography, theme.body)}>{p.description}</p>}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
@@ -238,7 +278,7 @@ export function declarationBlock(
   headStyle?: CSSProperties,
   variant: SectionHeadingVariant = 'standard',
 ): ReactNode {
-  if (!data.fresherDetails.declaration) return null
+  if (!hasText(data.fresherDetails.declaration)) return null
   const head = headStyle ?? headingStyleFn(typography, theme.heading)
   return (
     <section className="resume-section">
@@ -259,13 +299,14 @@ export function buildStandardSections(
   options?: BuildOptions,
 ) {
   const variant = options?.headingVariant ?? 'standard'
+  const marker = options?.descriptionMarker ?? getDescriptionMarker(props.templateId, props.data.useBulletPoints)
   const p = props
   return {
     summary: summaryBlock(p, titles?.summary, undefined, variant),
     education: educationBlock(p, titles?.education ?? 'Education', undefined, options?.educationTable, variant),
-    experience: experienceBlock(p, titles?.experience ?? 'Experience', undefined, options?.experienceBullets, variant),
+    experience: experienceBlock(p, titles?.experience ?? 'Experience', undefined, options?.experienceBullets, variant, marker),
     skills: skillsBlock(p, titles?.skills ?? 'Skills', undefined, options?.skillsBullets ? 'bullet' : 'inline', variant),
-    projects: projectsBlock(p, titles?.projects, undefined, variant),
+    projects: projectsBlock(p, titles?.projects, undefined, variant, marker),
     personalDetails: personalDetailsBlock(p, undefined, variant),
     declaration: declarationBlock(p, undefined, variant),
   }

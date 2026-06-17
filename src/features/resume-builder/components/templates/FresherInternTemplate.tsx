@@ -2,6 +2,9 @@ import { itemGapStyle, sectionGapStyle } from '../../data/spacing'
 import { bodyStyle, headingStyle, nameStyle, smallBodyStyle, subheadingStyle } from '../../data/typography'
 import { formatEducationGrades } from '../../utils/educationDisplay'
 import type { TemplateProps } from './types'
+import { getDescriptionMarker } from '../../utils/descriptionDisplay'
+import { filledEducation, filledExperiences, filledProjects, filledSkills } from '../../utils/resumeEntryUtils'
+import { ExperienceEntryFields, ProjectEntryFields } from './entryFields'
 
 function SectionBlock({
   title,
@@ -23,10 +26,11 @@ function SectionBlock({
   )
 }
 
-export function FresherInternTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function FresherInternTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo, experiences, education, skills, projects, fresherDetails } = data
   const sectionHead = headingStyle(typography, theme.heading)
   const body = bodyStyle(typography, theme.body)
+  const descMarker = getDescriptionMarker(templateId, data.useBulletPoints)
 
   return (
     <div className="resume-template-root leading-relaxed resume-p flex flex-col" style={sectionGapStyle(spacing)}>
@@ -46,10 +50,10 @@ export function FresherInternTemplate({ data, theme, typography, spacing }: Temp
         </SectionBlock>
       )}
 
-      {education.length > 0 && (
+      {filledEducation(education).length > 0 && (
         <SectionBlock title="Education" headingStyle={sectionHead}>
           <div className="flex flex-col" style={itemGapStyle(spacing)}>
-            {education.map((edu) => {
+            {filledEducation(education).map((edu) => {
               const grades = formatEducationGrades(edu)
               return (
                 <div key={edu.id} className="resume-entry flex justify-between gap-3 border-b border-gray-200 pb-2">
@@ -72,42 +76,34 @@ export function FresherInternTemplate({ data, theme, typography, spacing }: Temp
         </SectionBlock>
       )}
 
-      {experiences.length > 0 && (
+      {filledExperiences(experiences).length > 0 && (
         <SectionBlock title="Internships & Industrial Training" headingStyle={sectionHead}>
           <div className="flex flex-col" style={itemGapStyle(spacing)}>
-            {experiences.map((exp) => (
+            {filledExperiences(experiences).map((exp) => (
               <div key={exp.id} className="resume-entry">
-                <div className="flex justify-between gap-2">
-                  <p style={subheadingStyle(typography, theme.subheading)}>{exp.position}</p>
-                  <p style={smallBodyStyle(typography, theme.body)}>
-                    {exp.startDate} – {exp.current ? 'Present' : exp.endDate}
-                  </p>
-                </div>
-                <p style={body}>{exp.company}</p>
-                {exp.description && <p className="mt-0.5" style={body}>{exp.description}</p>}
+                <ExperienceEntryFields exp={exp} theme={theme} typography={typography} descriptionMarker={descMarker} bodyStyleOverride={body} />
               </div>
             ))}
           </div>
         </SectionBlock>
       )}
 
-      {skills.length > 0 && (
+      {filledSkills(skills).length > 0 && (
         <SectionBlock title="Technical Skills & Certifications" headingStyle={sectionHead}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {skills.map((s) => (
+            {filledSkills(skills).map((s) => (
               <p key={s.id} style={body}>▸ {s.name}</p>
             ))}
           </div>
         </SectionBlock>
       )}
 
-      {projects.length > 0 && (
+      {filledProjects(projects).length > 0 && (
         <SectionBlock title="Projects" headingStyle={sectionHead}>
           <div className="flex flex-col" style={itemGapStyle(spacing)}>
-            {projects.map((p) => (
+            {filledProjects(projects).map((p) => (
               <div key={p.id} className="resume-entry">
-                <p style={subheadingStyle(typography, theme.subheading)}>{p.name}</p>
-                {p.description && <p style={body}>{p.description}</p>}
+                <ProjectEntryFields project={p} theme={theme} typography={typography} descriptionMarker={descMarker} showTechnologies={false} />
               </div>
             ))}
           </div>

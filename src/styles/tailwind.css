@@ -61,7 +61,7 @@
     box-sizing: border-box;
   }
 
-  /* Screen preview: repeat A4 page bands so multi-page resumes are fully visible */
+  /* Single-page preview band (multi-page uses stacked .resume-page-frame) */
   .resume-paper-preview {
     background-image: repeating-linear-gradient(
       to bottom,
@@ -76,6 +76,16 @@
     background-repeat: repeat-y;
   }
 
+  .resume-page-frame {
+    flex-shrink: 0;
+  }
+
+  .resume-page-frame .resume-paper {
+    box-shadow: none;
+    border-radius: 0;
+    background-image: none;
+  }
+
   .resume-template-root {
     width: 100%;
     min-height: auto;
@@ -84,6 +94,10 @@
 
   .resume-p {
     padding: 10mm;
+  }
+
+  .resume-p-compact {
+    padding: 6mm 8mm;
   }
 
   .resume-px {
@@ -113,6 +127,45 @@
     break-inside: avoid-page;
     page-break-inside: avoid;
   }
+
+  /* Two-column layouts: grid flows better across pages than flex */
+  .resume-col-layout {
+    display: grid;
+    grid-template-columns: var(--resume-sidebar-width, 28%) 1fr;
+    align-items: start;
+  }
+
+  .resume-col-sidebar {
+    align-self: stretch;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-col-main {
+    break-inside: auto;
+    page-break-inside: auto;
+    min-width: 0;
+  }
+
+  /* Timeline sections: header compact, entries split across pages */
+  .resume-timeline-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-timeline-head {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .resume-timeline-body {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-timeline-body > .resume-entry:last-child {
+    padding-bottom: 0.75rem;
+  }
 }
 
 @media print {
@@ -123,19 +176,20 @@
 
   html,
   body {
-    width: 210mm;
+    width: auto;
     height: auto;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 0 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .resume-paper {
-    width: 210mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
     min-height: auto !important;
     height: auto !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -149,7 +203,8 @@
   .resume-px,
   .resume-py,
   .resume-pt,
-  .resume-pb {
+  .resume-pb,
+  .resume-p-compact {
     padding: 0 !important;
   }
 }

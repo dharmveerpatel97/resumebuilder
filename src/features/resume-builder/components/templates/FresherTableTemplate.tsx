@@ -5,9 +5,9 @@ import { OrderedSectionList } from './OrderedSectionList'
 import { buildStandardSections } from './sectionBlocks'
 import type { TemplateProps } from './types'
 
-export function FresherTableTemplate({ data, theme, typography, spacing }: TemplateProps) {
+export function FresherTableTemplate({ data, templateId, theme, typography, spacing }: TemplateProps) {
   const { personalInfo } = data
-  const props = { data, theme, typography, spacing }
+  const props = { data, templateId, theme, typography, spacing }
   const sectionHead = headingStyle(typography, theme.heading)
   const body = bodyStyle(typography, theme.body)
 
@@ -31,7 +31,7 @@ export function FresherTableTemplate({ data, theme, typography, spacing }: Templ
         sections={buildStandardSections(
           props,
           { summary: 'Career Objective', education: 'Academic Qualification', skills: 'Computer Skills', experience: 'Work Experience' },
-          { educationTable: true, skillsBullets: true, experienceBullets: true },
+          { educationTable: true, skillsBullets: true, headingVariant: 'fresher' },
         )}
       />
     </div>
