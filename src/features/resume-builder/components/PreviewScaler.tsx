@@ -104,7 +104,8 @@ export function PreviewScaler({ zoom, children, onPageCountChange }: PreviewScal
   const measureTree = child
     ? cloneElement(child, {
         embedded: true,
-        ref: pageCount > 1 ? childRef : undefined,
+        // Always keep export ref on the full unclipped document (matches PDF source)
+        ref: childRef,
       })
     : children
 
@@ -115,7 +116,7 @@ export function PreviewScaler({ zoom, children, onPageCountChange }: PreviewScal
       className="pointer-events-none invisible absolute top-0 -left-[9999px]"
       style={{ width: `${PAPER_WIDTH_MM}mm` }}
     >
-      <ZoomWrapper zoom={zoom} widthMm={PAPER_WIDTH_MM}>
+      <ZoomWrapper zoom={1} widthMm={PAPER_WIDTH_MM}>
         {measureTree}
       </ZoomWrapper>
     </div>
@@ -137,7 +138,7 @@ export function PreviewScaler({ zoom, children, onPageCountChange }: PreviewScal
       <div className="relative mx-auto shrink-0 max-w-full pb-2" style={{ width: scaledWidth }}>
         {hiddenMeasure}
         <ZoomWrapper zoom={zoom} widthMm={PAPER_WIDTH_MM}>
-          {children}
+          {cloneElement(child, { ref: undefined })}
         </ZoomWrapper>
       </div>
     )

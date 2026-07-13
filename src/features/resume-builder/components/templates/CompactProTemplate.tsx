@@ -21,9 +21,19 @@ import type { TemplateProps } from './types'
 function SectionTitle({ title, style }: { title: string; style: CSSProperties }) {
   const color = typeof style.color === 'string' ? style.color : '#1d4ed8'
   return (
-    <div className="mb-1.5">
-      <h3 className="uppercase tracking-wide" style={style}>{title}</h3>
-      <div className="mt-1 h-px" style={{ backgroundColor: hexToRgba(color, 0.25) }} />
+    <div className="mb-0.5" style={{ paddingBottom: 0 }}>
+      <h3
+        className="uppercase tracking-wide"
+        style={{
+          ...style,
+          margin: 0,
+          paddingBottom: 4,
+          lineHeight: 1.35,
+          borderBottom: `1px solid ${hexToRgba(color, 0.35)}`,
+        }}
+      >
+        {title}
+      </h3>
     </div>
   )
 }
@@ -124,12 +134,15 @@ export function CompactProTemplate({ data, templateId, theme, typography, spacin
               <div className="flex flex-col" style={itemGapStyle(spacing)}>
                 {filledProjects(projects).map((project) => {
                   const dates = formatProjectDateRange(project)
+                  const title = hasText(project.technologies)
+                    ? joinParts([project.name, project.technologies], ' -- ')
+                    : project.name
                   return (
                     <div key={project.id} className="resume-entry">
-                      {(hasText(project.name) || dates) && (
+                      {(hasText(title) || dates) && (
                         <div className="flex justify-between items-start gap-3">
-                          {hasText(project.name) && (
-                            <p style={subheadingStyle(typography, theme.subheading)}>{project.name}</p>
+                          {hasText(title) && (
+                            <p style={subheadingStyle(typography, theme.subheading)}>{title}</p>
                           )}
                           {dates && (
                             <p className="whitespace-nowrap shrink-0" style={{ ...smallBodyStyle(typography, theme.body), opacity: 0.85 }}>
@@ -137,11 +150,6 @@ export function CompactProTemplate({ data, templateId, theme, typography, spacin
                             </p>
                           )}
                         </div>
-                      )}
-                      {hasText(project.technologies) && (
-                        <p className="italic mt-0.5" style={{ ...smallBodyStyle(typography, theme.subheading), opacity: 0.85 }}>
-                          {project.technologies}
-                        </p>
                       )}
                       {renderDescription(project.description, body, descMarker, theme.heading)}
                     </div>

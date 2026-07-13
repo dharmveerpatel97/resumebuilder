@@ -86,7 +86,10 @@ export function filledEducation(education: Education[]): Education[] {
 }
 
 export function filledProjects(projects: Project[]): Project[] {
-  return projects.filter(isProjectFilled)
+  return projects
+    .filter(isProjectFilled)
+    .slice()
+    .sort((a, b) => (a.serial ?? 0) - (b.serial ?? 0))
 }
 
 export function filledSkills(skills: Skill[]): Skill[] {

@@ -155,7 +155,7 @@ export function ResumeForm({
   const updateProject = (
     id: string,
     field: keyof ResumeData['projects'][number],
-    value: string,
+    value: string | number,
   ) => {
     onChange({
       ...data,
@@ -166,6 +166,8 @@ export function ResumeForm({
   }
 
   const addProject = () => {
+    const nextSerial =
+      data.projects.reduce((max, p) => Math.max(max, p.serial || 0), 0) + 1
     onChange({
       ...data,
       projects: [
@@ -178,6 +180,7 @@ export function ResumeForm({
           url: '',
           startDate: '',
           endDate: '',
+          serial: nextSerial,
         },
       ],
     })
@@ -485,7 +488,11 @@ export function ResumeForm({
 
       <FormSection
         title="Projects"
-        subtitle={data.projects.length > 0 ? `${data.projects.length} added` : undefined}
+        subtitle={
+          data.projects.length > 0
+            ? `${data.projects.length} added · use Sr. No. to set order`
+            : undefined
+        }
         action={
           <Button variant="outline" size="sm" onClick={addProject}>
             <Plus className="h-4 w-4" /> Add
@@ -506,6 +513,16 @@ export function ResumeForm({
             </button>
             <p className="text-sm font-medium text-text-muted">Project {index + 1}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Sr. No."
+                type="number"
+                min={1}
+                value={String(project.serial ?? index + 1)}
+                onChange={(e) =>
+                  updateProject(project.id, 'serial', Math.max(1, Number(e.target.value) || 1))
+                }
+                placeholder="1"
+              />
               <Input
                 label="Project Name"
                 value={project.name}

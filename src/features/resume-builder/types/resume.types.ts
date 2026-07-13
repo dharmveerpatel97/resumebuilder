@@ -56,6 +56,8 @@ export interface Project {
   url: string
   startDate: string
   endDate: string
+  /** Display order — lower numbers appear first in the resume */
+  serial?: number
 }
 
 export type ResumeSectionId =
